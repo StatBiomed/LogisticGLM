@@ -42,6 +42,15 @@ def logisticRegression(x,y):
       print(f"Iteration {i}, Loss: {loss:.4f}")
   print(f"Weight: {w}, Bias: {b}")
 
+
+#sample data
+np.random.seed(42)
+x = np.random.randn(100, 2)
+true_w = np.array([3, -3])
+true_b = 0.5
+z = np.dot(x, true_w) + true_b
+y = (z > 0).astype(int)
+
 logisticRegression(x,y)
 
 
