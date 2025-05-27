@@ -26,19 +26,22 @@ def getGradient(x, y, w, b, a):
   b -= a * db
   return w, b
 
-# 初始参数
-w = np.zeros(x.shape[1])
-b = 0                     
-a = 0.01
-ite = 50000
-
-#循环训练
-for i in range(ite):
+def logisticRegression(x,y):
+  """封装起来"""
+  #初始值
+  w = np.zeros(x.shape[1])
+  b = 0                     
+  a = 0.01
+  ite = 50000
+  #训练
+  for i in range(ite):
     w, b = getGradient(x, y, w, b, a)
     if i % 1000 == 0:
-    #每一千个interation返回一次数字 用于纠错
-        y_pred = modelPred(x, w, b)
-        loss = lossFunc(y, y_pred)
-        print(f"Iteration {i}, Loss: {loss:.4f}")
+      y_pred = modelPred(x, w, b)
+      loss = lossFunc(y, y_pred)
+      print(f"Iteration {i}, Loss: {loss:.4f}")
+    print(f"Weight: {w}, Bias: {b}")
 
-print(f"Weight: {w}, Bias: {b}")
+logisticRegression(x,y)
+
+
