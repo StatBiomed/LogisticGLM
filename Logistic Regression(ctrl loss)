@@ -42,6 +42,7 @@ def logisticRegression(x,y):
     if ite % 1000 == 0:
         print(f"Iteration {ite}, Loss: {loss:.4f}")
     ite += 1
+  print(f"Weight: {w}, Bias: {b}")
 
 
 logisticRegression(x,y)
