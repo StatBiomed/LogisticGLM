@@ -40,7 +40,7 @@ def logisticRegression(x,y):
       y_pred = modelPred(x, w, b)
       loss = lossFunc(y, y_pred)
       print(f"Iteration {i}, Loss: {loss:.4f}")
-    print(f"Weight: {w}, Bias: {b}")
+  print(f"Weight: {w}, Bias: {b}")
 
 logisticRegression(x,y)
 
