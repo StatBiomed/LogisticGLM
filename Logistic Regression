@@ -1,1 +1,44 @@
-#type here
+import numpy as np
+#weight，bias是函数wTx+b的系数 代入sigmoid函数得到预测值 代入lossfunction得到loss
+
+def sigmoid(model):
+  """输入模型，输出概率值"""
+  return 1/(1+np.exp(-model))
+
+def modelPred(x, w, b):
+  """输入模型参数 x，w，b 输出预测值y_pred"""
+  return sigmoid(np.dot(x, w) + b)
+
+def lossFunc(y, y_pred):
+  """cross-entropy loss,y：实际值，y_pred:预测值 输出loss"""
+  cel = - np.mean(y * np.log(y_pred) + (1 - y)*np.log(1 - y_pred)) 
+  return cel
+
+def getGradient(x, y, w, b, a):
+  """计算损失函数关于w和b的梯度，
+     输入x，w，b共同得到预测值 y为实际值 a为学习率 
+     输出新的w，b值"""
+  y_pred = modelPred(x, w, b)
+  dw = np.dot(x.T, (y_pred - y)) / (x.shape[0])
+  db = np.sum(y_pred - y) / (x.shape[0])
+  #梯度下降 向负方向更新
+  w -= a * dw
+  b -= a * db
+  return w, b
+
+# 初始参数
+w = np.zeros(x.shape[1])
+b = 0                     
+a = 0.01
+ite = 50000
+
+#循环训练
+for i in range(ite):
+    w, b = getGradient(x, y, w, b, a)
+    if i % 1000 == 0:
+    #每一千个interation返回一次数字 用于纠错
+        y_pred = modelPred(x, w, b)
+        loss = lossFunc(y, y_pred)
+        print(f"Iteration {i}, Loss: {loss:.4f}")
+
+print(f"Weight: {w}, Bias: {b}")
