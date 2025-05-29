@@ -1,4 +1,6 @@
+#限制loss 含画图
 import numpy as np
+import matplotlib.pyplot as plt
 #weight，bias是函数wTx+b的系数 代入sigmoid函数得到预测值 代入lossfunction得到loss
 
 def sigmoid(model):
@@ -26,23 +28,56 @@ def getGradient(x, y, w, b, a):
   b -= a * db
   return w, b
 
+# 示例数据
+np.random.seed(42)
+x = np.random.randn(100, 2)  # 100个样本，2个特征
+true_w = np.array([3, -3])   # 真实权重
+true_b = 0.5                 # 真实偏置
+z = np.dot(x, true_w) + true_b
+y = (z > 0).astype(int)      # 生成标签
+
 def logisticRegression(x,y):
   """封装起来"""
   #初始值
   w = np.zeros(x.shape[1])
   b = 0                     
   a = 0.01
-  ite = 0
+  epoch = 0
   loss = 1
-  max_ite = 100000
+  max_epoch = 20000
+  epoch_loss = []
   #训练
-  while loss >= 0.05 and ite < max_ite:
+  while loss >= 0.05 and epoch < max_epoch:
     w, b = getGradient(x, y, w, b, a)
     loss = lossFunc(y, modelPred(x, w, b))
-    if ite % 1000 == 0:
-        print(f"Iteration {ite}, Loss: {loss:.4f}")
-    ite += 1
+    epoch_loss.append(loss)
+    if epoch % 1000 == 0:
+        print(f"Iteration {epoch}, Loss: {loss:.4f}")
+    epoch += 1
   print(f"Weight: {w}, Bias: {b}")
+  return epoch_loss,epoch
 
 
-logisticRegression(x,y)
+
+#画图
+epoch_loss, epoch = logisticRegression(x, y)
+
+if __name__ == "__main__":
+    y_train_loss = epoch_loss  # Loss值，即y轴
+    x_train_loss = range(len(y_train_loss))  # Loss的数量，即x轴
+
+    plt.figure()
+
+    # 去除顶部和右边框框
+    ax = plt.axes()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.xlabel('epoch')  # x轴标签
+    plt.ylabel('loss')  # y轴标签
+
+    # 以x_train_loss为横坐标, y_train_loss为纵坐标，曲线宽度为1，实线，增加标签，训练损失
+    plt.plot(x_train_loss, y_train_loss, linewidth=1, linestyle="solid", label="tra")
+    plt.legend()
+    plt.title('Loss curve')
+    plt.show()
