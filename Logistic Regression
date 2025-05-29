@@ -1,5 +1,5 @@
 import numpy as np
-#weight，bias是函数wTx+b的系数 代入sigmoid函数得到预测值 代入lossfunction得到loss
+#weight，bias是函数w·x+b的系数 代入sigmoid函数得到预测值 代入lossfunction得到loss
 
 def sigmoid(model):
   """输入模型，输出概率值"""
