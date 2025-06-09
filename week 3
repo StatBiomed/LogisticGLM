@@ -1,0 +1,264 @@
+#数据自己生成
+import numpy as np
+import matplotlib.pyplot as plt
+
+def sigmoid(z):
+  return 1/(1 + np.exp(-z))
+
+def pred(w, x, b):
+  return sigmoid(np.dot(x, w) + b)
+
+def compute_loss(y_true, y_pred):
+  m = len(y_true)
+  f_loss = -1/m * np.sum(y_true * np.log(y_pred) + (1-y_true) * np.log(1-y_pred))
+  return f_loss
+
+def gradient_down(y, w, x, b, a):
+  y_pred = pred(w, x, b)
+  m = len(y)
+  '''
+  用矩阵求偏导的证明
+  输入的多元变量 xT = [x1, x2, x3, ..., xn]
+  现在我们有一个函数，该函数对多元变量的导数就是偏导:
+  ∂f(x)/∂xT = [∂f(x)/∂x1, ∂f(x)/∂x2, ..., ∂f(x)/∂xn]
+  假设该函数组为矩阵A，矩阵A作用于xT(两矩阵相乘)
+  f(x) = [a1,1, a1,2, ..., a1,n] * [x1]
+         [a2,1, a2,2, ..., a2,n]   [x2]
+         .                         .
+         .                         .
+         .                         .
+         [am,1, am,2, ..., am,n]   [xn]
+  A*x  = [a1,1*x1 + a1,2*x2 + ... + a1,n*xn]
+         [a2,1*x1 + a2,2*x2 + ... + a2,n*xn]
+         .
+         .
+         .
+         [am,1*x1 + am,2*x2 + ... + am,n*xn]
+  对Ax进行求导，Ax对于变量x其中一个元素xi的偏导是：
+  ∂Ax/∂xi = [∂Ax1/∂xi: a1,i]
+            [∂Ax2/∂xi: a2,i]
+            .
+            .
+            .
+            [∂Axm/∂xi: am,i]
+  整个求导则是对于每个元素xi求偏导结果的集合：
+  ∂Ax/∂x = [∂Ax/∂x1, ∂Ax/∂x2, ..., ∂Ax/∂xn]
+         = [[a1,1, a2,1, ..., am,1]T, [a1,2, a2,2, ..., am,2]T, ..., [a1,n, a2,n, ..., am,n]T]
+         = AT
+  矩阵A的偏导数是矩阵A的转置AT（由于矩阵的每个元素都是线性函数，偏导数是矩阵的转置。）
+  --------------------------------
+  x: 输入特征矩阵，维度为m×n。这里 m 是样本数量，n 是特征数量。
+  y_pred: 模型的预测值，维度为 m×1，通常通过特征矩阵 x 与权重向量 w 相乘得到。
+  y: 实际的目标值，维度为 m×1。
+  m: 样本数量，通常用 len(y) 表示。w: 权重向量，维度为 n×1，表示每个特征对目标变量的影响程度。
+
+  梯度其实就是偏导数的集合，代码中，gradient_w是权重的梯度，也就是是每个权重（与特征相关）的偏导数。
+  基于特征的偏导数可以通过特征矩阵的转置xT计算(根据上面证明）。这个转置矩阵将每个特征的影响整合到一起，
+  并作用于误差向量(y_pred-y)，通过矩阵乘法的方式计算每个特征对损失的贡献，最终得到权重的偏导数。
+  --------------------------------
+  '''
+  gradient_w = np.dot(x.T, (y_pred - y)) / m
+  gradient_b = np.sum(y_pred - y) / m
+  w -= a * gradient_w
+  b -= a * gradient_b
+  return w, b
+
+def run_logistic_regression(x, y):
+  w = np.zeros(x.shape[1])
+  b = 0
+  a = 0.1
+  loss = float('inf')
+  count = 0
+  losses = []
+  while loss >= 0.01 and count <= 10000:
+    w, b = gradient_down(y, w, x, b, a)
+    y_pred = pred(w, x, b)
+    loss = compute_loss(y, y_pred)
+    losses.append(loss)
+    print(f"Iteration {count}: w = {w}, b = {b}, loss = {loss}")
+    count += 1
+  print("Final weights: w = ", w, " b = ", b)
+
+  # 绘制损失曲线
+  plt.figure(figsize=(10, 6))
+  plt.plot(losses, label='Loss')
+  plt.title('Loss Curve')
+  plt.xlabel('Iteration Lumber')
+  plt.ylabel('Loss Value')
+  plt.legend()
+  plt.grid()
+  plt.show()
+  # 绘制决策边界
+  plt.figure(figsize=(10, 6))
+  plt.scatter(x[:, 0], x[:, 1], c=y, cmap='bwr', alpha=0.5)
+  x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+  y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+  xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+
+  Z = pred(w, np.c_[xx.ravel(), yy.ravel()], b)
+  Z = Z.reshape(xx.shape)
+
+  plt.contourf(xx, yy, Z, levels=[0, 0.5, 1], alpha=0.3, cmap='bwr')
+  plt.title('Decision boundary')
+  plt.xlabel('Feature 1')
+  plt.ylabel('Feature 2')
+  plt.scatter(x[:, 0], x[:, 1], c=y, edgecolors='k')
+  plt.show()
+
+
+np.random.seed(42)
+x = np.random.randn(100, 2)  # 100个样本，2个特征
+true_w = np.array([3, -3])   # 真实权重
+true_b = 0.5                 # 真实偏置
+z = np.dot(x, true_w) + true_b
+y = (z > 0).astype(int)      # 生成标签
+run_logistic_regression(x, y)
+----------------
+#Toy datasets by make_blobs
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+
+# 生成聚类数据
+X, y = make_blobs(n_samples=100, centers=2, cluster_std=1.0, random_state=42)
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def pred(w, x, b):
+    return sigmoid(np.dot(x, w) + b)
+
+def compute_loss(y_true, y_pred):
+    m = len(y_true)
+    f_loss = -1 / m * np.sum(y_true * np.log(y_pred + 1e-10) + (1 - y_true) * np.log(1 - y_pred + 1e-10))
+    return f_loss
+
+def gradient_down(y, w, x, b, a):
+    y_pred = pred(w, x, b)
+    m = len(y)
+    gradient_w = np.dot(x.T, (y_pred - y)) / m
+    gradient_b = np.sum(y_pred - y) / m
+    w -= a * gradient_w
+    b -= a * gradient_b
+    return w, b
+
+def run_logistic_regression(x, y):
+    w = np.zeros(x.shape[1])
+    b = 0
+    a = 0.1
+    loss = float('inf')
+    count = 0
+    losses = []
+    while loss >= 0.01 and count <= 1000:
+        w, b = gradient_down(y, w, x, b, a)
+        y_pred = pred(w, x, b)
+        loss = compute_loss(y, y_pred)
+        losses.append(loss)
+        print(f"Iteration {count}: w = {w}, b = {b}, loss = {loss}")
+        count += 1
+    print("Final weights: w = ", w, " b = ", b)
+
+    # 绘制损失曲线
+    plt.figure(figsize=(10, 6))
+    plt.plot(losses, label='loss')
+    plt.title('Loss Curve')
+    plt.xlabel('Iteration Number')
+    plt.ylabel('Loss Value')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # 绘制决策边界
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x[:, 0], x[:, 1], c=y, cmap='bwr', alpha=0.5)
+    x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+    y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+
+    Z = pred(w, np.c_[xx.ravel(), yy.ravel()], b)
+    Z = Z.reshape(xx.shape)
+
+    plt.contourf(xx, yy, Z, levels=[0, 0.5, 1], alpha=0.3, cmap='bwr')
+    plt.title('Decision Boundary')
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.scatter(x[:, 0], x[:, 1], c=y, edgecolors='k')
+    plt.show()
+
+# 运行逻辑回归
+run_logistic_regression(X, y)
+----------------
+#Toy datasets by make_circles
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_circles
+
+# 生成同心圆数据
+X, y = make_circles(n_samples=100, shuffle=True, noise=0.1, factor=0.8, random_state=42)
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def pred(w, x, b):
+    return sigmoid(np.dot(x, w) + b)
+
+def compute_loss(y_true, y_pred):
+    m = len(y_true)
+    f_loss = -1 / m * np.sum(y_true * np.log(y_pred + 1e-10) + (1 - y_true) * np.log(1 - y_pred + 1e-10))
+    return f_loss
+
+def gradient_down(y, w, x, b, a):
+    y_pred = pred(w, x, b)
+    m = len(y)
+    gradient_w = np.dot(x.T, (y_pred - y)) / m
+    gradient_b = np.sum(y_pred - y) / m
+    w -= a * gradient_w
+    b -= a * gradient_b
+    return w, b
+
+def run_logistic_regression(x, y):
+    w = np.zeros(x.shape[1])
+    b = 0
+    a = 0.1
+    loss = float('inf')
+    count = 0
+    losses = []
+    while loss >= 0.01 and count <= 1000:
+        w, b = gradient_down(y, w, x, b, a)
+        y_pred = pred(w, x, b)
+        loss = compute_loss(y, y_pred)
+        losses.append(loss)
+        print(f"Iteration {count}: w = {w}, b = {b}, loss = {loss}")
+        count += 1
+    print("Final weights: w = ", w, " b = ", b)
+
+    # 绘制损失曲线
+    plt.figure(figsize=(10, 6))
+    plt.plot(losses, label='Loss')
+    plt.title('Loss Curve')
+    plt.xlabel('Iteration Number')
+    plt.ylabel('Loss Value')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # 绘制决策边界
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x[:, 0], x[:, 1], c=y, cmap='bwr', alpha=0.5)
+    x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
+    y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100), np.linspace(y_min, y_max, 100))
+
+    Z = pred(w, np.c_[xx.ravel(), yy.ravel()], b)
+    Z = Z.reshape(xx.shape)
+
+    plt.contourf(xx, yy, Z, levels=[0, 0.5, 1], alpha=0.3, cmap='bwr')
+    plt.title('Decision Boundary')
+    plt.xlabel('Feature 1')
+    plt.ylabel('Feature 2')
+    plt.scatter(x[:, 0], x[:, 1], c=y, edgecolors='k')
+    plt.show()
+
+# 运行逻辑回归
+run_logistic_regression(X, y)
+-----------------------
