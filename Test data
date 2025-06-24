@@ -1,1 +1,44 @@
+#minimize：toy box test
+import numpy as np
+from scipy.optimize import minimize
+from sklearn.datasets import make_circles, make_blobs
+#weight，bias是函数wTx+b的系数 代入sigmoid函数得到预测值 代入lossfunction得到loss
 
+def sigmoid(model):
+  """输入模型，输出概率值"""
+  return 1/(1+np.exp(-model))
+
+def modelPred(x, w, b):
+  """输入模型参数 x，w，b 输出预测值y_pred"""
+  return sigmoid(np.dot(x, w) + b)
+
+def lossFunc(y, y_pred):
+  """cross-entropy loss,y：实际值，y_pred:预测值 输出loss"""
+  y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+  cel = - np.mean(y * np.log(y_pred) + (1 - y)*np.log(1 - y_pred))
+  return cel
+
+def logisticRegression(x,y):
+  """封装起来"""
+  #初始值
+  def objectives(params):
+    w = params[:-1]  # 前n-1个元素是权重
+    b = params[-1]   # 最后一个元素是偏置
+    y_pred = modelPred(x, w, b)
+    return lossFunc(y, y_pred)
+
+  initial_guess = np.zeros(x.shape[1] + 1)*0.01
+
+  result = minimize(objectives, initial_guess, method = 'L-BFGS-B' )
+  print("最优解:", result.x)
+  print("Loss:", result.fun)
+  print("Epoch:", result.nit)
+
+#示例数据
+#ToyBox尝试：圆形
+x, y = make_circles(n_samples=100, shuffle=True, noise=0.1, factor=0.8, random_state=42) 
+logisticRegression(x, y)
+
+#ToyBox尝试：团块
+x, y = make_blobs(n_samples=100, centers=2, cluster_std=1.0, random_state=42)
+logisticRegression(x, y)
